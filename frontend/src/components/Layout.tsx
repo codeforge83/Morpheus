@@ -1,0 +1,286 @@
+import { useEffect, useState } from "react";
+import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
+import { useAuth } from "@/lib/auth";
+import { CommandPalette } from "@/components/CommandPalette";
+import { prefetchRoute } from "@/lib/navigation";
+
+type NavItem = { to: string; label: string; icon: string; end?: boolean };
+
+/** Navigation is scoped to the signed-in role so each person sees only their own
+ *  workflow. Routes still resolve for everyone (deep links are preserved) — this
+ *  only controls what the sidebar surfaces.
+ *  - Officer: the linear case workflow (analyse → track → export).
+ *  - Reviewer: a sign-off queue; no intake/drafting tools (separation of duties).
+ *  - Admin: a system console only — no case-work destinations at all. */
+function navFor(role?: string): { main: NavItem[]; secondary: NavItem[] } {
+  if (role === "ADMIN") {
+    return {
+      main: [
+        { to: "/admin", label: "System Console", icon: "gear", end: true },
+        { to: "/evaluation", label: "Accuracy Proof", icon: "check" },
+        { to: "/feedback", label: "Feedback", icon: "docs" },
+      ],
+      secondary: [{ to: "/help", label: "Help & Support", icon: "help" }],
+    };
+  }
+  if (role === "REVIEWER") {
+    // No intake/drafting; the sign-off queue is the reviewer's home.
+    return {
+      main: [
+        { to: "/history", label: "Sign-Off Queue", icon: "check", end: true },
+        { to: "/standards", label: "Standards Library", icon: "book" },
+        { to: "/analytics", label: "Reports", icon: "report" },
+      ],
+      secondary: [
+        { to: "/regulatory-updates", label: "Regulatory Updates", icon: "bell" },
+        { to: "/help", label: "Help & Support", icon: "help" },
+      ],
+    };
+  }
+  // Officer (default)
+  return {
+    main: [
+      { to: "/", label: "Home", icon: "home", end: true },
+      { to: "/analyses/new", label: "New Analysis", icon: "plus" },
+      { to: "/history", label: "My Submissions", icon: "docs" },
+      { to: "/standards", label: "Standards Library", icon: "book" },
+      { to: "/analytics", label: "Reports", icon: "report" },
+    ],
+    secondary: [
+      { to: "/regulatory-updates", label: "Regulatory Updates", icon: "bell" },
+      { to: "/help", label: "Help & Support", icon: "help" },
+    ],
+  };
+}
+
+function Icon({ name }: { name: string }) {
+  const p: Record<string, string> = {
+    home: "M3 10.5 12 3l9 7.5M5 9.5V20h5v-5h4v5h5V9.5",
+    plus: "M12 5v14M5 12h14",
+    docs: "M7 3h7l5 5v13H7zM14 3v5h5",
+    book: "M4 5a2 2 0 0 1 2-2h11v16H6a2 2 0 0 0-2 2z",
+    report: "M5 21V8l5-5h9v18zM10 3v5H5",
+    bell: "M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6M10 20a2 2 0 0 0 4 0",
+    gear: "M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.4-2.3 1a7 7 0 0 0-1.7-1L14.5 2h-4l-.4 2.5a7 7 0 0 0-1.7 1l-2.3-1-2 3.4L4 11a7 7 0 0 0 0 2l-2 1.5 2 3.4 2.3-1a7 7 0 0 0 1.7 1l.4 2.5h4l.4-2.5a7 7 0 0 0 1.7-1l2.3 1 2-3.4L18.9 13",
+    check: "M20 6 9 17l-5-5",
+    help: "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18M9.5 9a2.5 2.5 0 0 1 4.5 1.5c0 1.5-2 2-2 3M12 17h.01",
+  };
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"
+      strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+      <path d={p[name] ?? p.home} />
+    </svg>
+  );
+}
+
+const linkClass = ({ isActive }: { isActive: boolean }) =>
+  `flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors ${
+    isActive ? "bg-white text-primary shadow-sm" : "text-white/75 hover:bg-white/10 hover:text-white"
+  }`;
+
+export function Layout() {
+  const { user, logout } = useAuth();
+  const nav = navFor(user?.role);
+  const location = useLocation();
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [userMenu, setUserMenu] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); setPaletteOpen(true); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  // Close mobile drawer on route transition
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [location.pathname]);
+
+  const sidebar = (
+    <div
+      className="flex h-full flex-col text-white"
+      style={{ background: "#013528" }}
+    >
+      {/* Brand Logo & Wordmark - Links to Home */}
+      <Link
+        to="/"
+        className="group mx-2 mt-2 flex items-center gap-3 rounded-xl px-3 py-3 transition-all duration-200 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/40 cursor-pointer"
+        aria-label="MORPHEUS Home — Standards Intelligence for Public Procurement"
+        onMouseEnter={() => prefetchRoute("/")}
+      >
+        <img
+          src="/brand/emblem_light.png"
+          alt="Emblem of India"
+          className="h-10 w-auto opacity-95 transition-transform duration-200 group-hover:scale-105 flex-none"
+        />
+        <div className="leading-tight min-w-0">
+          <div className="font-display text-xl font-bold tracking-wider text-white transition-colors group-hover:text-emerald-200">
+            MORPHEUS
+          </div>
+          <div className="text-[11px] font-medium leading-tight text-white/70">
+            Standards Intelligence<br />for Public Procurement
+          </div>
+        </div>
+      </Link>
+
+      <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto px-3 py-4">
+        {nav.main.map((i) => (
+          <NavLink
+            key={i.to}
+            to={i.to}
+            end={i.end}
+            className={linkClass}
+            onMouseEnter={() => prefetchRoute(i.to)}
+            onClick={() => setMobileOpen(false)}
+          >
+            <Icon name={i.icon} /> {i.label}
+          </NavLink>
+        ))}
+        <div className="my-3 border-t border-white/10" />
+        {nav.secondary.map((i) => (
+          <NavLink
+            key={i.to}
+            to={i.to}
+            end={i.end}
+            className={linkClass}
+            onMouseEnter={() => prefetchRoute(i.to)}
+            onClick={() => setMobileOpen(false)}
+          >
+            <Icon name={i.icon} /> {i.label}
+          </NavLink>
+        ))}
+      </nav>
+
+      {/* Decorative footer (heritage illustration + motto + quote) */}
+      <div className="mt-auto flex-shrink-0 select-none px-3 pb-4 pt-1 text-center">
+        <img
+          src="/brand/sidebar_heritage_banner.png"
+          alt="Transparent Procurement Stronger India"
+          className="mx-auto w-full max-w-[210px] object-contain"
+        />
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-canvas text-ink lg:flex">
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-[100] focus:rounded-lg focus:bg-primary focus:px-3 focus:py-2 focus:text-sm focus:font-semibold focus:text-white">
+        Skip to content
+      </a>
+      {/* Desktop sidebar */}
+      <aside className="hidden w-64 flex-none lg:block">
+        <div className="fixed inset-y-0 left-0 w-64">{sidebar}</div>
+      </aside>
+
+      {/* Mobile slide-over */}
+      {mobileOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div className="absolute inset-0 bg-ink/40" onClick={() => setMobileOpen(false)} aria-hidden />
+          <div className="absolute inset-y-0 left-0 w-64">
+            <button onClick={() => setMobileOpen(false)} aria-label="Close menu"
+              className="absolute right-3 top-4 z-10 grid h-8 w-8 place-items-center rounded-lg text-white/80 hover:bg-white/10">✕</button>
+            {sidebar}
+          </div>
+        </div>
+      )}
+
+      {/* Content column */}
+      <div className="min-w-0 flex-1">
+        {/* Top bar */}
+        <header
+          className="sticky top-0 z-30 flex items-center gap-3 border-b border-line bg-surface/90 px-4 py-3 backdrop-blur-md shadow-2xs sm:px-6 lg:px-8"
+          style={{ top: "env(safe-area-inset-top, 0px)" }}
+        >
+          <button
+            onClick={() => setMobileOpen(true)}
+            aria-label="Open menu"
+            className="grid h-9 w-9 flex-none place-items-center rounded-lg text-muted hover:bg-panel lg:hidden"
+          >
+            ☰
+          </button>
+
+          {/* Mobile Brand Link to Home */}
+          <Link
+            to="/"
+            className="flex items-center gap-2 lg:hidden flex-none pr-1 focus:outline-none focus:ring-2 focus:ring-primary/40 rounded-lg group"
+            aria-label="MORPHEUS Home"
+          >
+            <img src="/brand/emblem_light.png" alt="" className="h-7 w-auto transition-transform duration-200 group-hover:scale-105" />
+            <span className="font-display text-base font-bold tracking-wide text-primary">MORPHEUS</span>
+          </Link>
+
+          <div className="relative min-w-0 flex-1 max-w-xl">
+            <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
+                <circle cx="11" cy="11" r="7" />
+                <path d="m20 20-3-3" strokeLinecap="round" />
+              </svg>
+            </span>
+            <input
+              placeholder="Search tenders, standards, clause requirements…"
+              readOnly
+              onFocus={() => setPaletteOpen(true)}
+              onClick={() => setPaletteOpen(true)}
+              aria-label="Open command palette"
+              className="w-full cursor-pointer rounded-xl border border-line bg-canvas/80 py-2 pl-9.5 pr-14 text-xs font-medium text-ink shadow-inner outline-none transition-all hover:bg-canvas focus:border-primary focus:bg-surface focus:ring-2 focus:ring-primary/20"
+            />
+            <kbd className="pointer-events-none absolute right-3 top-1/2 hidden -translate-y-1/2 rounded-md border border-line bg-surface px-1.5 py-0.5 text-[10px] font-bold text-muted shadow-2xs sm:block">
+              ⌘K
+            </kbd>
+          </div>
+
+          <NavLink
+            to="/regulatory-updates"
+            aria-label="Regulatory updates and alerts"
+            className="relative grid h-9 w-9 flex-none place-items-center rounded-xl border border-line/60 text-muted transition-all hover:border-primary/40 hover:bg-panel hover:text-ink shadow-2xs"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4">
+              <path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6M10 20a2 2 0 0 0 4 0" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-danger ring-2 ring-surface animate-pulse" />
+          </NavLink>
+
+          <div className="relative flex-none">
+            <button
+              onClick={() => setUserMenu((v) => !v)}
+              className="flex items-center gap-2 rounded-xl border border-line/70 bg-surface/80 p-1 pr-2.5 shadow-2xs transition-all hover:bg-panel hover:border-line focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
+            >
+              <span className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-to-br from-primary to-emerald-700 text-xs font-bold text-white shadow-xs">
+                {(user?.full_name || "U").split(" ").map((s) => s[0]).slice(0, 2).join("").toUpperCase()}
+              </span>
+              <span className="hidden text-left leading-tight sm:block">
+                <span className="block text-xs font-bold text-ink">{user?.full_name || user?.email}</span>
+                <span className="block text-[10px] font-semibold uppercase tracking-wider text-muted">{(user?.role || "").toLowerCase()}</span>
+              </span>
+              <span className="hidden text-xs text-muted sm:block">▾</span>
+            </button>
+            {userMenu && (
+              <>
+                <button className="fixed inset-0 z-10 cursor-default" aria-hidden onClick={() => setUserMenu(false)} />
+                <div className="absolute right-0 z-20 mt-2 w-44 overflow-hidden rounded-lg border border-line bg-surface py-1 shadow-lg">
+                  <button onClick={() => { setUserMenu(false); logout(); }}
+                    className="block w-full px-3 py-2 text-left text-sm text-danger hover:bg-danger-soft">Sign out</button>
+                </div>
+              </>
+            )}
+          </div>
+        </header>
+
+        <main id="main-content" role="main" tabIndex={-1} className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6 lg:px-8">
+          <Outlet />
+        </main>
+        <footer className="mx-auto max-w-[1400px] px-4 pb-8 sm:px-6 lg:px-8">
+          <p className="border-t border-line pt-4 text-[11px] leading-snug text-muted">
+            Prototype — not an official Government of India system. Standards data shown may be labelled
+            <span className="font-medium"> DEMO_SYNTHETIC</span> and is not authoritative BIS data.
+          </p>
+        </footer>
+      </div>
+
+      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
+    </div>
+  );
+}

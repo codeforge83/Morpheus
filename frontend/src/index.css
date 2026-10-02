@@ -1,0 +1,165 @@
+@import "tailwindcss";
+
+/* ── MORPHEUS GovTech design tokens (v2 green/cream) ───────────────────────
+   Registered with Tailwind v4 @theme → utilities bg-surface, text-ink,
+   bg-primary, text-saffron, border-line, etc. */
+@theme {
+  --color-canvas: #faf8f3;      /* warm cream application background */
+  --color-surface: #fffdfc;     /* near-white warm card surface */
+  --color-panel: #f4f1ea;       /* warm subtle fill (level-3 chips/rows) */
+  --color-line: #eae4d8;        /* soft warm border */
+
+  --color-primary: #0b5d3b;     /* deep government green */
+  --color-primary-dark: #064e2e;
+  --color-primary-soft: #e7f1ec;
+
+  --color-saffron: #ff9933;     /* India saffron accent */
+  --color-saffron-soft: #fff2e2;
+  --color-gold: #c99a2e;        /* muted gold (reports) */
+  --color-indiablue: #2563eb;   /* Ashoka blue accent */
+  --color-violet: #7c3aed;      /* evidence accent */
+  --color-violet-soft: #f0eafe;
+
+  --color-ink: #191815;         /* warm crisp near-black text */
+  --color-muted: #56544d;       /* enhanced contrast warm secondary text (7.2:1 ratio) */
+
+  --color-success: #16a34a;
+  --color-success-soft: #e7f6ed;
+  --color-warning: #f59e0b;
+  --color-warning-soft: #fdf3e0;
+  --color-danger: #dc2626;
+  --color-danger-soft: #fbeaea;
+
+  /* Type system — a specialised procurement-intelligence workstation.
+     Manrope carries the interface; IBM Plex Mono marks technical identifiers
+     (IS numbers, requirement codes, clause/page refs, timestamps); Source Serif 4
+     is reserved for document excerpts and evidence reading areas. */
+  --font-sans: "Manrope", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+  --font-serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+}
+
+:root {
+  color-scheme: light;
+}
+
+html {
+  scrollbar-gutter: stable;
+  margin: 0;
+}
+
+body {
+  margin: 0;
+}
+
+body {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+}
+
+
+/* Headings typography hierarchy */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+}
+
+h1 {
+  letter-spacing: -0.025em;
+  line-height: 1.25;
+}
+
+h2 {
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+}
+
+h3 {
+  letter-spacing: -0.015em;
+  line-height: 1.35;
+}
+
+/* Section & major headings — Manrope, sentence case, optically tightened. */
+.font-display {
+  font-family: var(--font-sans);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  letter-spacing: -0.02em;
+}
+
+/* Technical identifiers — IS numbers, requirement codes, clause & page refs,
+   timestamps, system IDs. IBM Plex Mono, slightly condensed tracking. */
+.font-tech {
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum" 1;
+  letter-spacing: -0.01em;
+}
+
+/* Document excerpts, quotations and evidence reading areas — Source Serif 4. */
+.font-evidence {
+  font-family: var(--font-serif);
+  line-height: 1.65;
+  letter-spacing: 0.005em;
+}
+
+/* High-readability badge and micro-text helper */
+.text-micro {
+  font-size: 11px;
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+}
+
+/* Force crisp tabular numbers on financial and metrics figures */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Accessible focus ring for keyboard users. */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Tactile GovTech card hover and lift */
+.card-hover {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
+}
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(11, 93, 59, 0.12);
+}
+
+/* GovTech clean custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-canvas);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-line);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #bfb8a6;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+
+

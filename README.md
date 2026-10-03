@@ -718,7 +718,7 @@ The included standards/QCO/certification demo records are labelled **DEMO_SYNTHE
 
 ### Repository
 
-https://github.com/sanjivinsmoke95/morpheus
+https://github.com/codeforge83/Morpheus.git
 
 ### Local demo
 
@@ -730,9 +730,9 @@ Backend/OpenAPI:
 
 http://localhost:8010/docs
 
-### Live deployment
+### Project Demo
 
-A public deployed demo URL is **not currently specified in the repository**. Do not treat the local URLs above as public deployment links.
+Youtube Live demo https://youtu.be/JZKxyYRKHXM
 
 ---
 
@@ -742,14 +742,12 @@ A public deployed demo URL is **not currently specified in the repository**. Do 
 
 Team-member names are not currently recorded in the repository source.
 
-Add the official SIH team member list here before the final submission:
-
-- **Team Lead:** [Name]
-- **Member 2:** [Name]
-- **Member 3:** [Name]
-- **Member 4:** [Name]
-- **Member 5:** [Name]
-- **Member 6:** [Name]
+- **Team Lead:** Adhvaith
+- **Member 2:** Sanjeeth
+- **Member 3:** Rithvik
+- **Member 4:** Ashok
+- **Member 5:** Vimala
+- **Member 6:** Spoorthi
 
 Do not infer or fabricate team membership from GitHub contributors.
 
